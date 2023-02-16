@@ -2,7 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\QuizController;
 use App\Http\Controllers\Api\AuthController;
 
 /*
@@ -22,7 +22,9 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 
 Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
-    Route::apiResource('orders', OrderController::class);
+    Route::apiResource('quiz', QuizController::class);
+    Route::post('update-question-options', [QuizController::class, 'updateQuestionOptions']);
+    Route::delete('delete-question-option/{id}', [QuizController::class, 'deleteQuestionOption']);
 });
 
 Route::post('login', [AuthController::class, 'login']);

@@ -28,7 +28,7 @@ class AuthController extends ApiController
             return $this->respondNotFound([
                 'success' => false,
                 'errors' => 'The provided credentials are incorrect.',
-                'data' => null
+                'data' => []
             ]);
         }
         $data = $this->getAuthResponseData($user);
