@@ -5,9 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use App\Models\QuizQuestionOptions;
-use App\Models\QuizQuestions;
-use App\Http\Resources\QuizQuestionsResource;
+use App\Models\Quiz;
+use App\Http\Resources\QuizResource;
+
 
 class QuizController extends ApiController
 {
@@ -17,19 +17,20 @@ class QuizController extends ApiController
     public function index(Request $request)
     {
 
-        $questions = QuizQuestions::with('options')->where('user_id', $request->user()->id);
+        $quizes = Quiz::with('questions.options')->where('user_id', $request->user()->id);
 
-        if ($questions->count() == 0) {
+        if ($quizes->count() == 0) {
             return $this->respondNotFound([
                 'success' => false,
-                'errors' => 'Questions Not Found!',
+                'errors' => 'Quiz Not Found!',
                 'data' => []
             ]);
         }
+
         return $this->respond([
             'success' => true,
             'errors' => null,
-            'data' => QuizQuestionsResource::collection($questions->get())
+            'data' => QuizResource::collection($quizes->get())
         ]);
     }
 
@@ -42,13 +43,12 @@ class QuizController extends ApiController
             'title' => 'required',
         ]);
 
-        $question = QuizQuestions::saveQuestion($request);
-
+        $question = Quiz::saveQuiz($request);
 
         return $this->respond([
             'success' => true,
             'errors' => null,
-            'data' => new QuizQuestionsResource($question)
+            'data' => new QuizResource($question)
         ]);
     }
 
@@ -65,84 +65,40 @@ class QuizController extends ApiController
      */
     public function update(Request $request, string $id)
     {
-        $question = QuizQuestions::where([['uuid', $id], ['user_id', $request->user()->id]])->first();
-
-        if (empty($question)) {
+        $quiz = Quiz::where('uuid', $id)->first();
+        if (empty($quiz)) {
             return $this->respond([
                 'status' => false,
-                'message' => 'Quiz Question Not Found',
-                'data' =>  []
-            ]);
-        }
-        $question = QuizQuestions::updateQuestion($request, $question);
-
-        return $this->respond([
-            'success' => true,
-            'errors' => null,
-            'data' => new QuizQuestionsResource($question)
-        ]);
-    }
-
-    public function updateQuestionOptions(Request $request)
-    {
-        $question = QuizQuestions::where('uuid', $request->uuid)->first();
-
-        if (empty($question)) {
-            return $this->respond([
-                'status' => false,
-                'message' => 'Quiz Question Not Found',
+                'message' => 'Quiz Not Found',
                 'data' =>  []
             ]);
         }
 
-        $result = QuizQuestionOptions::updateQuizQuestionOptions($request, $question);
-
+        $result = Quiz::updateQuiz($request, $quiz);
 
         return $this->respond([
             'success' => true,
             'errors' => null,
-            'data' => []
+            'data' => new QuizResource($result)
         ]);
     }
-
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($id)
+    public function destroy(string $id)
     {
-        $question = QuizQuestions::where('uuid', $id)->first();
+        $quiz = Quiz::where('uuid', $id)->first();
 
-        if (empty($question)) {
+        if (empty($quiz)) {
             return $this->respondNotFound([
                 'success' => false,
-                'errors' => 'Question Not Found!',
+                'errors' => 'Quiz Not Found!',
                 'data' => []
             ]);
         }
 
-        $question->forceDelete();
-        return $this->respond([
-            'success' => true,
-            'errors' => null,
-            'data' => []
-        ]);
-    }
-
-
-    public function deleteQuestionOption($id)
-    {
-        $question = QuizQuestionOptions::where('uuid', $id)->first();
-
-        if (empty($question)) {
-            return $this->respondNotFound([
-                'success' => false,
-                'errors' => 'Question Option Not Found!',
-                'data' => []
-            ]);
-        }
-
-        $question->forceDelete();
+        $quiz->forceDelete();
         return $this->respond([
             'success' => true,
             'errors' => null,
