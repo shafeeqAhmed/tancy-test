@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use App\Models\Quiz;
 use App\Http\Resources\QuizResource;
-
+use Illuminate\Support\Facades\Validator;
 
 class QuizController extends ApiController
 {
@@ -17,7 +17,7 @@ class QuizController extends ApiController
     public function index(Request $request)
     {
 
-        $quizes = Quiz::with('questions.options')->where('user_id', $request->user()->id);
+        $quizes = Quiz::with('questions.options');
 
         if ($quizes->count() == 0) {
             return $this->respondNotFound([
@@ -39,9 +39,17 @@ class QuizController extends ApiController
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'title' => 'required',
         ]);
+
+        if ($validator->fails()) {
+            return $this->respondValidatorError([
+                'success' => false,
+                'errors' => $validator->errors(),
+                'data' => []
+            ]);
+        }
 
         $question = Quiz::saveQuiz($request);
 
@@ -67,7 +75,7 @@ class QuizController extends ApiController
     {
         $quiz = Quiz::where('uuid', $id)->first();
         if (empty($quiz)) {
-            return $this->respond([
+            return $this->respondNotFound([
                 'status' => false,
                 'message' => 'Quiz Not Found',
                 'data' =>  []
@@ -93,7 +101,7 @@ class QuizController extends ApiController
         if (empty($quiz)) {
             return $this->respondNotFound([
                 'success' => false,
-                'errors' => 'Quiz Not Found!',
+                'errors' => 'Quizzes Not Found!',
                 'data' => []
             ]);
         }

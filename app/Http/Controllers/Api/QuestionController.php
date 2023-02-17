@@ -9,6 +9,8 @@ use App\Models\Quiz;
 use App\Models\Questions;
 use App\Models\Options;
 use App\Http\Resources\QuestionsResource;
+use Illuminate\Support\Facades\Validator;
+
 
 class QuestionController extends ApiController
 {
@@ -18,10 +20,10 @@ class QuestionController extends ApiController
     public function index(Request $request)
     {
 
-        $request->validate([
-            'quiz_uuid' => 'required',
-        ]);
-
+        $result = $this->validateRequest($request, 'quiz_uuid');
+        if ($result) {
+            return $result;
+        }
         $id = Quiz::getIdByUuid($request->quiz_uuid);
         $questions = Questions::with('options')->where('quiz_id', $id);
 
@@ -39,14 +41,33 @@ class QuestionController extends ApiController
         ]);
     }
 
+    public function validateRequest($request, $value)
+    {
+
+        $validator = Validator::make($request->all(), [
+            $value => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->respondValidatorError([
+                'success' => false,
+                'errors' => $validator->errors(),
+                'data' => []
+            ]);
+        }
+    }
+
     /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'title' => 'required',
-        ]);
+
+        $result = $this->validateRequest($request, 'title');
+        if ($result) {
+            return $result;
+        }
+
         $quiz_id = Quiz::getIdByUuid($request->quiz_uuid);
 
         if (empty($quiz_id)) {
@@ -83,9 +104,9 @@ class QuestionController extends ApiController
         $question = Questions::where('uuid', $id)->first();
 
         if (empty($question)) {
-            return $this->respond([
+            return $this->respondNotFound([
                 'status' => false,
-                'message' => 'Question Not Found',
+                'message' => 'Question Not Found!',
                 'data' =>  []
             ]);
         }
@@ -105,9 +126,9 @@ class QuestionController extends ApiController
         $question = Questions::where([['uuid', $request->uuid], ['quiz_id', $id]])->first();
 
         if (empty($question)) {
-            return $this->respond([
+            return $this->respondNotFound([
                 'status' => false,
-                'message' => 'Question Not Found',
+                'message' => 'Question Not Found!',
                 'data' =>  []
             ]);
         }

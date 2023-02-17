@@ -51,6 +51,10 @@ class ApiController extends Controller
         return $this->setStatusCode(500)->respondWithError($message);
     }
 
+    public function respondValidatorError($message = 'Validation Error')
+    {
+        return $this->setStatusCode(422)->respondWithError($message);
+    }
 
 
     public function respondNoContent()
